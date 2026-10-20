@@ -198,21 +198,42 @@ function TaskScreen({ token, user, onLogout }) {
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
   const [priority, setPriority] = useState("medium");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt:desc");
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    request("/tasks", { token })
-      .then((result) => { if (active) setTasks(result); })
-      .catch((requestError) => {
-        if (!active) return;
-        setError(requestError.message);
-        if (requestError.status === 401) onLogout();
-      })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [token, onLogout]);
+    const [sort, order] = sortBy.split(":");
+    const params = new URLSearchParams({ sort, order });
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (search.trim()) params.set("search", search.trim());
+
+    const timeout = window.setTimeout(() => {
+      setLoading(true);
+      setError("");
+      request(`/tasks?${params}`, { token })
+        .then((result) => { if (active) setTasks(result); })
+        .catch((requestError) => {
+          if (!active) return;
+          setError(requestError.message);
+          if (requestError.status === 401) onLogout();
+        })
+        .finally(() => { if (active) setLoading(false); });
+    }, search.trim() ? 250 : 0);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
+  }, [token, onLogout, statusFilter, search, sortBy, refreshVersion]);
+
+  function refreshTasks() {
+    setRefreshVersion((version) => version + 1);
+  }
 
   async function handleCreate(event) {
     event.preventDefault();
@@ -223,7 +244,7 @@ function TaskScreen({ token, user, onLogout }) {
         method: "POST",
         body: JSON.stringify({ title, description, priority, ...(deadline ? { deadline } : {}) }),
       });
-      setTasks((current) => [task, ...current]);
+      refreshTasks();
       setTitle("");
       setDescription("");
       setDeadline("");
@@ -237,26 +258,26 @@ function TaskScreen({ token, user, onLogout }) {
   async function toggleTask(task) {
     const status = task.status === "completed" ? "todo" : "completed";
     try {
-      const updated = await request(`/tasks/${task._id}`, { token, method: "PUT", body: JSON.stringify({ status }) });
-      setTasks((current) => current.map((item) => item._id === updated._id ? updated : item));
+      await request(`/tasks/${task._id}`, { token, method: "PUT", body: JSON.stringify({ status }) });
+      refreshTasks();
     } catch (requestError) {
       setError(requestError.message);
     }
   }
 
   async function saveTask(id, updates) {
-    const updated = await request(`/tasks/${id}`, {
+    await request(`/tasks/${id}`, {
       token,
       method: "PUT",
       body: JSON.stringify(updates),
     });
-    setTasks((current) => current.map((task) => task._id === updated._id ? updated : task));
+    refreshTasks();
   }
 
   async function deleteTask(id) {
     try {
       await request(`/tasks/${id}`, { token, method: "DELETE" });
-      setTasks((current) => current.filter((task) => task._id !== id));
+      refreshTasks();
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -294,6 +315,24 @@ function TaskScreen({ token, user, onLogout }) {
               <button className="add-button" type="submit"><span aria-hidden="true">+</span> Add task</button>
             </div>
           </form>
+
+          <div className="task-filter-bar">
+            <label className="search-field">
+              <span aria-hidden="true">⌕</span>
+              <span className="sr-only">Search tasks</span>
+              <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search tasks" maxLength={100} />
+            </label>
+            <label className="filter-select"><span>Status</span>
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="all">All tasks</option><option value="todo">To do</option><option value="in-progress">In progress</option><option value="completed">Completed</option>
+              </select>
+            </label>
+            <label className="filter-select"><span>Sort</span>
+              <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                <option value="createdAt:desc">Newest</option><option value="createdAt:asc">Oldest</option><option value="deadline:asc">Deadline</option><option value="title:asc">Title A-Z</option><option value="title:desc">Title Z-A</option>
+              </select>
+            </label>
+          </div>
 
           <div className="list-heading"><h2>YOUR LIST</h2><span>{tasks.length} {tasks.length === 1 ? "task" : "tasks"}</span></div>
           {error && <p className="workspace-error" role="alert">{error}</p>}

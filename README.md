@@ -5,6 +5,7 @@ A full-stack task management web application built with the MERN stack (MongoDB,
 ## Features
 - User registration and login with JWT authentication
 - Private task lists with create, edit, complete, and delete actions
+- Status filtering, task search, and sorting by creation date, deadline, or title
 - Task title, description, deadline, priority, and status
 - Responsive React interface
 

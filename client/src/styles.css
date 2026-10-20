@@ -89,6 +89,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .deadline-control input { width: 105px; border: 0; background: transparent; color: #758078; font-size: 10px; }
 .add-button { display: flex; align-items: center; gap: 7px; padding: 9px 12px; border: 0; border-radius: 3px; background: var(--green-dark); color: white; cursor: pointer; font-size: 11px; font-weight: 600; transition: .18s ease; }
 .add-button span { font-size: 17px; line-height: 10px; }
+.task-filter-bar { display: grid; grid-template-columns: minmax(150px, 1fr) auto auto; align-items: center; gap: 12px; margin-top: 18px; }
+.search-field { display: flex; min-width: 0; height: 36px; align-items: center; gap: 7px; padding: 0 10px; border: 1px solid var(--line); border-radius: 3px; background: var(--paper); color: #839087; }
+.search-field > span:first-child { font-size: 18px; }
+.search-field input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 11px; }
+.filter-select { display: flex; align-items: center; gap: 6px; color: #8a9189; font-size: 10px; }
+.filter-select select { max-width: 120px; height: 36px; padding: 0 7px; border: 1px solid var(--line); border-radius: 3px; background: var(--paper); color: #59655b; font-size: 10px; }
 .list-heading { display: flex; align-items: center; justify-content: space-between; margin: 36px 0 8px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .list-heading h2 { margin: 0; color: #7e867e; font-size: 10px; font-weight: 700; letter-spacing: 1.3px; }
 .list-heading span { color: #9ba098; font-size: 10px; }
@@ -176,6 +182,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .task-row { gap: 8px; }
   .task-edit-fields { grid-template-columns: 1fr 1fr; }
   .task-edit-fields label:last-child { grid-column: span 2; }
+  .task-filter-bar { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .search-field { grid-column: span 2; }
+  .filter-select { justify-content: space-between; }
+  .filter-select select { max-width: 130px; flex: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
